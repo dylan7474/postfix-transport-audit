@@ -65,14 +65,9 @@ so do not rely solely on outbound attempts for safety decisions.
 
 ## Audit trail
 
-Commit:
-
-- `runs/run-.../REPORT.md`
-- `runs/run-.../transport-usage-report.txt`
-
-Do NOT commit:
-
-- `maillog.ALL` (large + potentially sensitive)
+Store audit outputs **outside** this repository. Do not commit any run artifacts
+or reports here, even if they look sanitized. This keeps the repo tooling-only
+and avoids accidental exposure of customer data.
 
 ## Next steps / extensions
 
