@@ -31,7 +31,6 @@ Run as root (or a user with read access to the logs/config):
 ```bash
 git clone <this repo> postfix-transport-audit
 cd postfix-transport-audit
-chmod +x scripts/collect_source.sh
 scripts/collect_source.sh
 ```
 
@@ -57,7 +56,6 @@ Run the bundle collection script:
 ```bash
 git clone <this repo> postfix-transport-audit
 cd postfix-transport-audit
-chmod +x scripts/collect_source.sh
 scripts/collect_source.sh
 ```
 
@@ -85,7 +83,6 @@ Run the analysis script using the bundle tar:
 
 ```bash
 cd postfix-transport-audit
-chmod +x scripts/analyze_bundle.sh
 scripts/analyze_bundle.sh /path/to/postfix-audit-<host>-<timestamp>.tar
 ```
 
@@ -108,7 +105,6 @@ Debian: analyze bundle
 
 ```bash
 cd postfix-transport-audit
-chmod +x scripts/analyze_bundle.sh
 scripts/analyze_bundle.sh /path/to/postfix-audit-<host>-<timestamp>.tar
 ```
 
