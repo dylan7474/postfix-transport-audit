@@ -70,6 +70,29 @@ if [ -z "$ALL_TRANSPORT" ] || [ ! -f "$ALL_TRANSPORT" ]; then
   exit 1
 fi
 
+# CHANGE CONTROL ANNOTATION
+# -------------------------
+# Purpose:
+#   Locate client_access evidence for sender whitelist activity auditing.
+#
+# How this block works (execution flow):
+#   1) Prefer canonical /etc/postfix/client_access capture path.
+#   2) Fall back to collector custom/ path.
+#   3) Use full-tree search as conservative last resort.
+#
+# Safety and change scope:
+#   - Optional input only; analysis continues if file is absent.
+#   - Read-only path discovery.
+echo "[*] Locating client_access (optional)..."
+CLIENT_ACCESS=""
+if [ -f "$BUNDLEDIR/etc/postfix/client_access" ]; then
+  CLIENT_ACCESS="$BUNDLEDIR/etc/postfix/client_access"
+elif [ -f "$BUNDLEDIR/custom/client_access" ]; then
+  CLIENT_ACCESS="$BUNDLEDIR/custom/client_access"
+else
+  CLIENT_ACCESS="$(find "$BUNDLEDIR" -type f -name 'client_access' | head -n 1 || true)"
+fi
+
 echo "[*] Building maillog.ALL (chronological)..."
 LOGDIR="$BUNDLEDIR/logs"
 if [ ! -d "$LOGDIR" ]; then
@@ -88,9 +111,25 @@ OUTLOG="$WORK/maillog.ALL"
   [ -n "$f" ] && cat "$f"
 done > "$OUTLOG"
 
-# Analyzer reads all_transport + merged logs and prints report to stdout.
+# CHANGE CONTROL ANNOTATION
+# -------------------------
+# Purpose:
+#   Invoke analyzer with optional client_access evidence for sender audit.
+#
+# How this block works (execution flow):
+#   1) Build analyzer argv with mandatory all_transport + merged log.
+#   2) Append client_access path when discovered in bundle.
+#   3) Persist deterministic report output in run workspace.
+#
+# Safety and change scope:
+#   - Read-only analysis input consumption.
+#   - Preserves existing behavior when client_access is not present.
 echo "[*] Running transport usage report..."
-python3 "$ROOT/scripts/report_transport_usage.py" "$ALL_TRANSPORT" "$OUTLOG" > "$WORK/transport-usage-report.txt"
+PY_ARGS=("$ROOT/scripts/report_transport_usage.py" "$ALL_TRANSPORT" "$OUTLOG")
+if [ -n "$CLIENT_ACCESS" ] && [ -f "$CLIENT_ACCESS" ]; then
+  PY_ARGS+=("$CLIENT_ACCESS")
+fi
+python3 "${PY_ARGS[@]}" > "$WORK/transport-usage-report.txt"
 
 # Renderer transforms raw report into board-friendly Markdown summary.
 echo "[*] Rendering summary report..."
