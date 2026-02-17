@@ -42,11 +42,26 @@ mkdir -p "$WORK"
 
 echo "[*] Writing metadata..."
 {
+  # CHANGE CONTROL ANNOTATION
+  # -------------------------
+  # Purpose:
+  #   Extend metadata capture with Postfix multi-instance visibility.
+  #
+  # How this block works (execution flow):
+  #   1) Write baseline host/time/system keys.
+  #   2) Append postmulti -l output to record instance inventory/state.
+  #
+  # Safety and change scope:
+  #   - Read-only command execution.
+  #   - Best-effort behavior retained via || true for legacy compatibility.
   # Keep metadata simple and grep-friendly (key=value format).
   echo "host=$HOST"
   echo "timestamp=$TS"
   echo "uname=$(uname -a)"
   echo "date_rfc=$(date -R)"
+  echo
+  echo "=== postmulti -l ==="
+  postmulti -l 2>/dev/null || true
 } > "$WORK/metadata.txt"
 
 # Capture Postfix runtime configuration in one file.
@@ -66,6 +81,21 @@ echo "[*] Copying postfix config..."
 mkdir -p "$WORK/etc"
 if [ -d /etc/postfix ]; then
   cp -a /etc/postfix "$WORK/etc/" 2>/dev/null || true
+fi
+if [ -d /etc/postfix-bulk ]; then
+  # CHANGE CONTROL ANNOTATION
+  # -------------------------
+  # Purpose:
+  #   Capture secondary Postfix instance configuration when present.
+  #
+  # How this block works (execution flow):
+  #   1) Detect canonical bulk-instance path used on multi-instance hosts.
+  #   2) Copy the tree into bundle/etc for offline correlation.
+  #
+  # Safety and change scope:
+  #   - Read-only source access.
+  #   - Best-effort cp preserves prior collector resilience profile.
+  cp -a /etc/postfix-bulk "$WORK/etc/" 2>/dev/null || true
 fi
 
 # Copy common custom map paths individually.
