@@ -7,6 +7,8 @@ Repeatable, auditable process to:
 1. Collect Postfix config + logs from a source server (including legacy RHEL6).
 2. Transfer a single bundle to an analysis host (Debian).
 3. Generate a report showing which transport overrides are active vs inactive.
+4. Optionally audit sender whitelist entries (`client_access`) for zero-activity
+   candidates before decommission work.
 
 ## Why this exists
 
@@ -22,7 +24,9 @@ We have Postfix transport overrides (per-client destination routing) and need ev
 - `/etc/postfix/net/smtp/*` and related maps (best-effort)
 - `/var/log/maillog*`
 - `postconf -n`, `postqueue -p`, `mailq`
+- `postmulti -l` instance inventory (when available)
 - basic routing + firewall snapshot
+- secondary instance config at `/etc/postfix-bulk` (when present)
 
 ## Source server: create bundle
 
@@ -114,6 +118,13 @@ Outputs in `runs/run-YYYYMMDD-HHMMSS/`:
 - `transport-usage-report.txt` (full detail)
 - `maillog.ALL` (combined logs used)
 
+The analyzer now also performs an optional sender whitelist audit when
+`client_access` is present in the bundle. In that case the
+`transport-usage-report.txt` includes:
+
+- `=== SENDER ACCESS AUDIT ===` totals (active vs inactive whitelist entries)
+- `=== KILL LIST ... ===` entries with zero observed activity in the log window
+
 ## Interpreting results
 
 "Inactive domains" = no matching `to=<...@domain>` hits in the log window provided.
@@ -125,6 +136,9 @@ Outputs in `runs/run-YYYYMMDD-HHMMSS/`:
 
 Important: Some domains may be active through local injection paths (LMTP/content_filter),
 so do not rely solely on outbound attempts for safety decisions.
+
+For sender whitelist decommission decisions, use the kill list as a review input
+only; it is evidence from the collected window, not an automatic removal plan.
 
 ## Audit trail
 

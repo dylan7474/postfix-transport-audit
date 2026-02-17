@@ -15,6 +15,10 @@ run against specific targets as described below.
 **Purpose:** Collects Postfix configuration, selected custom maps, logs, queue
 snapshots, and basic system/network metadata into a tarball bundle.
 
+It also captures multi-instance clues (`postmulti -l`) and copies
+`/etc/postfix-bulk` when present so analysis can account for hosts running more
+than one Postfix instance.
+
 **Target environment:** The legacy relay host (e.g., RHEL 6.x) you are auditing.
 Run it **on the source host** so it can read `/etc/postfix`, `/var/log/maillog*`,
 queue state, and network information.
@@ -42,6 +46,9 @@ source host.
 **Purpose:** Parses `all_transport` override domains and cross-references them
 against `maillog.ALL` to identify active vs inactive overrides, delivery
 statuses, and relay usage.
+
+When a `client_access` file is available, it also audits whitelisted sender
+IP/CIDR entries and emits an inactivity kill list for manual review.
 
 **Target environment:** Runs on the analysis workstation (via `python3`).
 It is **not** intended to run on the legacy source host.
